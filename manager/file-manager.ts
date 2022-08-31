@@ -1,8 +1,8 @@
 import * as path from "path";
 import * as fsSync from "fs";
 import * as fs from "fs/promises";
-import { MapObject } from "../types";
 import { HttpError } from "../classes/error";
+import { ModelFolderObject } from "../types";
 
 if (!process.env.APPDATA) throw new Error("APP_DATA directory not found!");
 
@@ -36,17 +36,12 @@ export class FileManager {
 
     /**
      * Lists all level editor maps
-     * @returns An array of map name and image
+     * @returns An array of map name
      */
     async getMaps() {
         try {
             const dirs = (await fs.readdir(DIRECTORIES.MAP_DIR, { withFileTypes: true })).filter( d => d.isDirectory() );
-            return await Promise.all(dirs.map( async d => {
-                return {
-                    name: d.name,
-                    image: await fs.readFile(path.join(DIRECTORIES.MAP_DIR, d.name, "preview.png"))
-                } as MapObject;
-            }));
+            return dirs.map( d => d.name );
         } catch(e) {
             console.error("Could not read map directory:", e);
             return [];
@@ -54,20 +49,11 @@ export class FileManager {
     }
 
     /**
-     * Gets info about a specific map
+     * Gets image filepath of a specific map
      * @param name The name of the map
-     * @returns The map info or null
      */
-    async getMapByName( name: string ) {
-        try {
-            return {
-                name,
-                image: await fs.readFile(path.join(DIRECTORIES.MAP_DIR, name, "preview.png"))
-            } as MapObject;
-        } catch(e) {
-            console.error("Could not read map directory:", e);
-            throw new HttpError("Could not read map directory!");
-        }
+    getMapImagePath( name: string ) {
+        return path.join(DIRECTORIES.MAP_DIR, name, "preview.png");
     }
 
     /**
@@ -111,6 +97,36 @@ export class FileManager {
     async getModelsInMap( map: string ) {
         const files = await fs.readdir(path.join(DIRECTORIES.MAP_DIR, map), { withFileTypes: true });
         return files.filter( f => f.isFile() && f.name.endsWith(".fbx") ).map( f => path.parse(f.name).name );
+    }
+
+    /**
+     * Deep-searches all 3D FBX models in the given directory
+     * @param dir The directory to search
+     * @returns The filepaths relative to the given directory
+     */
+    async getModelsInDirectory( dir: string ) {
+
+        async function listFiles( cwd: string ) {
+            const m = {} as ModelFolderObject;
+
+            let count = 0;
+            for (const node of await fs.readdir(cwd, { withFileTypes: true })) {
+                const filepath = path.join(cwd, node.name);
+                if (node.isDirectory()) {
+                    const subdir = await listFiles(filepath);
+                    if (subdir !== undefined) {
+                        m[node.name] = subdir;
+                        count++;
+                    }
+                } else if (node.isFile() && node.name.endsWith(".fbx")) {
+                    m[node.name.slice(0, -4)] = fsSync.existsSync(filepath.slice(0, -4)+".png");
+                    count++;
+                }
+            }
+            return count === 0 ? undefined : m;
+        }
+        
+        return listFiles(dir) || {};
     }
 
 }

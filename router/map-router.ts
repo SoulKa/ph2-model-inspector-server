@@ -1,7 +1,7 @@
 import { Response, Router, Request } from "express";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
-import { MapObject, ModelObject } from "../types";
+import { ModelObject } from "../types";
 
 export const MAP_ROUTER = Router();
 const MAP_SUBROUTER = Router();
@@ -9,7 +9,7 @@ const MAP_SUBROUTER = Router();
 const fileManager = FileManager.instance;
 
 // get all maps
-MAP_ROUTER.get<"/", {}, MapObject[], undefined>( "/", async (req, res) => {
+MAP_ROUTER.get<"/", {}, string[], undefined>( "/", async (req, res) => {
     res.send( await fileManager.getMaps() );
 });
 
@@ -24,8 +24,8 @@ MAP_ROUTER.use( "/:name", (req, res: Response<any, { mapName: string }>, next) =
 });
 
 // get map info
-MAP_SUBROUTER.get<"/", {}, MapObject, undefined, {}, { mapName: string }>( "/", async (req, res) => {
-    res.send( await fileManager.getMapByName(res.locals.mapName) );
+MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }>( "/preview.png", (req, res) => {
+    res.sendFile(fileManager.getMapImagePath(res.locals.mapName));
 });
 
 // get all models in map
