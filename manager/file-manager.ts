@@ -82,7 +82,12 @@ export class FileManager {
     async removeModel( map: string, name: string ) {
         try {
             await fs.unlink(path.join(DIRECTORIES.MAP_DIR, map, name+".fbx"));
-            await fs.unlink(path.join(DIRECTORIES.MAP_DIR, map, name+".png"));
+            try {
+                await fs.unlink(path.join(DIRECTORIES.MAP_DIR, map, name+".png"))
+            } catch(e) {
+                if ((e as Error & { errno: number, code: string, syscall: string, path: string })?.errno === -4058) return
+                throw e;
+            };
         } catch(e) {
             console.error("Could not remove model:", e);
             throw new HttpError("Could not remove model objects!");
