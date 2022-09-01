@@ -21,7 +21,7 @@ async function run() {
         });
 
         // start server
-        app.listen(PORT, () => console.log(`Server running on port ${PORT}...`));
+        app.listen(PORT, () => console.log(`Server running at "http://localhost:${PORT}..."`));
 
     } catch(e) {
         console.error("Could not setup webserver:", e);
