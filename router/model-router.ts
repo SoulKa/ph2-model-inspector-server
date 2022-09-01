@@ -17,7 +17,7 @@ MODEL_ROUTER.use<{}, undefined, undefined, { modelDirectory: string }, { modelDi
 
 // get all models
 MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: string }>( "/", (req, res, next) => {
-    fileManager.getModelsInDirectory(res.locals.modelDirectory).then(res.send).catch(next);
+    fileManager.getModelsInDirectory(res.locals.modelDirectory).then(res.send.bind(res)).catch(next);
 });
 
 // get mesh

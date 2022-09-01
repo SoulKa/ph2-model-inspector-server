@@ -10,7 +10,7 @@ const fileManager = FileManager.instance;
 
 // get all maps
 MAP_ROUTER.get<"/", {}, string[], undefined>( "/", (req, res, next) => {
-    fileManager.getMaps().then(res.send).catch(next);
+    fileManager.getMaps().then(res.send.bind(res)).catch(next);
 });
 
 
@@ -30,7 +30,7 @@ MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }
 
 // get all models in map
 MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: string }>( "/models", (req, res, next) => {
-    fileManager.getModelsInMap(res.locals.mapName).then(res.send).catch(next);
+    fileManager.getModelsInMap(res.locals.mapName).then(res.send.bind(res)).catch(next);
 });
 
 // add models in map
