@@ -25,8 +25,8 @@ MAP_ROUTER.use( "/:name", (req, res: Response<any, { mapName: string }>, next) =
 });
 
 // get map info
-MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }>( "/preview.png", (req, res) => {
-    res.sendFile(fileManager.getMapImagePath(res.locals.mapName));
+MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }>( "/preview.png", (req, res, next) => {
+    res.sendFile(fileManager.getMapImagePath(res.locals.mapName), err => err && next(err));
 });
 
 // get all models in map
@@ -44,10 +44,22 @@ MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, { modelDirectory: stri
     ).then(() => res.send()).catch(next);
 });
 
-// remove model form map
+// remove model from map
 MAP_SUBROUTER.delete<"/models/:model", { model: string }, undefined, undefined, {}, { mapName: string }>( "/models/:model", (req, res, next) => {
     fileManager.removeModel(
         res.locals.mapName,
         req.params.model
     ).then(() => res.send()).catch(next);
+});
+
+// get mesh of model in map
+MAP_SUBROUTER.get<"/models/:model/mesh", { model: string }, undefined, undefined, {}, { mapName: string }>( "/models/:model/mesh", (req, res, next) => {
+    const filepath = path.join(FileManager.DIRECTORIES.MAP_DIR, res.locals.mapName, req.params.model)+".fbx";
+    res.sendFile(filepath, err => err && next(err));
+});
+
+// get texture of model in map
+MAP_SUBROUTER.get<"/models/:model/texture", { model: string }, undefined, undefined, {}, { mapName: string }>( "/models/:model/texture", (req, res, next) => {
+    const filepath = path.join(FileManager.DIRECTORIES.MAP_DIR, res.locals.mapName, req.params.model)+".png";
+    res.sendFile(filepath, err => err && next(err));
 });

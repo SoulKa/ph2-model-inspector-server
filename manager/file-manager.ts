@@ -32,6 +32,8 @@ export class FileManager {
         return FileManager._instance;
     }
 
+    static get DIRECTORIES() { return DIRECTORIES; }
+
     private constructor() {}
 
     /**

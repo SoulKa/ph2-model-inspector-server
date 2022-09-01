@@ -21,15 +21,15 @@ MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: st
 });
 
 // get mesh
-MODEL_ROUTER.get<"/mesh", {}, ModelFolderObject, undefined, { modelPath: string }, { modelDirectory: string }>( "/mesh", (req, res) => {
+MODEL_ROUTER.get<"/mesh", {}, ModelFolderObject, undefined, { modelPath: string }, { modelDirectory: string }>( "/mesh", (req, res, next) => {
     if (req.query.modelPath === undefined) throw new HttpError("Missing model path query!", 400);
     const filepath = path.join(res.locals.modelDirectory, ...req.query.modelPath.split(":"))+".fbx";
-    res.sendFile(filepath);
+    res.sendFile(filepath, err => err && next(err));
 });
 
 // get texture
-MODEL_ROUTER.get<"/texture", {}, ModelFolderObject, undefined, { modelPath: string }, { modelDirectory: string }>( "/texture", (req, res) => {
+MODEL_ROUTER.get<"/texture", {}, ModelFolderObject, undefined, { modelPath: string }, { modelDirectory: string }>( "/texture", (req, res, next) => {
     if (req.query.modelPath === undefined) throw new HttpError("Missing texture path query!", 400);
     const filepath = path.join(res.locals.modelDirectory, ...req.query.modelPath.split(":"))+".png";
-    res.sendFile(filepath);
+    res.sendFile(filepath, err => err && next(err));
 });
