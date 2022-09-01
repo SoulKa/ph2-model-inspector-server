@@ -103,7 +103,7 @@ export class FileManager {
         for (const f of await fs.readdir(path.join(DIRECTORIES.MAP_DIR, map), { withFileTypes: true })) {
             if (f.isFile() && f.name.endsWith(".fbx")) {
                 const name = f.name.slice(0, -4);
-                m[name] = fsSync.existsSync(name+".png");
+                m[name] = fsSync.existsSync(path.join(DIRECTORIES.MAP_DIR, map, name+".png"));
             }
         }
         return m;
