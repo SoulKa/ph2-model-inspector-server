@@ -65,11 +65,11 @@ export class FileManager {
      */
     async addModel( map: string, modelPath: string, texturePath?: string ) {        
         try {
-            await fs.symlink(modelPath, path.join(DIRECTORIES.MAP_DIR, map, modelPath+".fbx"));
-            if (texturePath !== undefined) await fs.symlink(texturePath, path.join(DIRECTORIES.MAP_DIR, map, texturePath+".png"));
+            await fs.copyFile(modelPath+".fbx", path.join(DIRECTORIES.MAP_DIR, map, path.parse(modelPath).name+".fbx"));
+            if (texturePath !== undefined) await fs.copyFile(texturePath+".png", path.join(DIRECTORIES.MAP_DIR, map, path.parse(texturePath).name+".png"));
         } catch(e) {
-            console.error("Could not create symlinks:", e);
-            throw new HttpError("Could not copy model objects! Make sure the path is correct.");
+            console.error("Could copy files:", e);
+            throw new HttpError("Could not copy model object(s)! Make sure the path is correct.");
         }
     }
     

@@ -1,3 +1,4 @@
+import path from "path";
 import { Response, Router } from "express";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
@@ -34,6 +35,11 @@ MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: st
 });
 
 // add models in map
-MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, {}, { mapName: string }>( "/models", (req, res, next) => {
-    fileManager.addModel(res.locals.mapName, req.body.modelPath, req.body.texturePath).then(() => res.send()).catch(next);
+MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, { modelDirectory: string }, { mapName: string }>( "/models", (req, res, next) => {
+    if (req.query.modelDirectory === undefined) throw new HttpError("Missing model directory in URL query!");
+    fileManager.addModel(
+        res.locals.mapName,
+        path.join(req.query.modelDirectory, ...req.body.modelPath.split(":")),
+        req.body.texturePath !== undefined ? path.join(req.query.modelDirectory, ...req.body.texturePath.split(":")) : undefined
+    ).then(() => res.send()).catch(next);
 });
