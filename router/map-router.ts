@@ -34,12 +34,20 @@ MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: st
     fileManager.getModelsInMap(res.locals.mapName).then(res.send.bind(res)).catch(next);
 });
 
-// add models in map
+// add model in map
 MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, { modelDirectory: string }, { mapName: string }>( "/models", (req, res, next) => {
     if (req.query.modelDirectory === undefined) throw new HttpError("Missing model directory in URL query!");
     fileManager.addModel(
         res.locals.mapName,
         path.join(req.query.modelDirectory, ...req.body.modelPath.split(":")),
         req.body.texturePath !== undefined ? path.join(req.query.modelDirectory, ...req.body.texturePath.split(":")) : undefined
+    ).then(() => res.send()).catch(next);
+});
+
+// remove model form map
+MAP_SUBROUTER.delete<"/models/:model", { model: string }, undefined, undefined, {}, { mapName: string }>( "/models/:model", (req, res, next) => {
+    fileManager.removeModel(
+        res.locals.mapName,
+        req.params.model
     ).then(() => res.send()).catch(next);
 });
