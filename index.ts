@@ -1,5 +1,6 @@
-import express, { NextFunction, Request, Response } from "express";
 import path from "path";
+import open from "open";
+import express, { NextFunction, Request, Response } from "express";
 import { HttpError } from "./classes/error";
 import { API_ROUTER } from "./router";
 
@@ -24,7 +25,15 @@ async function run() {
         app.get("*", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
         // start server
-        app.listen(PORT, () => console.log(`Server running at "http://localhost:${PORT}..."`));
+        app.listen(PORT, async () => {
+            const url = "http://localhost:"+PORT;
+            console.log(`Server running at "${url}"...`);
+            try {
+                await open(url);
+            } catch(e) {
+                console.error("Could not open browser tab:", e);
+            }
+        });
 
     } catch(e) {
         console.error("Could not setup webserver:", e);
