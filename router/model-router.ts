@@ -5,20 +5,19 @@ import { FileManager } from "../manager/file-manager";
 import { ModelFolderObject } from "../types";
 
 export const MODEL_ROUTER = Router();
-const MAP_SUBROUTER = Router();
 
 const fileManager = FileManager.instance;
 
 // extract model directory from URL query
-MODEL_ROUTER.use<{}, undefined, undefined, { modelDirectory: string }, { modelDirectory: string }>((req, res, next) => {
+MODEL_ROUTER.use<{}, undefined, undefined, { modelDirectory: string }, { modelDirectory: string }>( (req, res, next) => {
     if (typeof req.query.modelDirectory !== "string" || req.query.modelDirectory === "") throw new HttpError("Missing model directory in URL query!", 400);
     res.locals.modelDirectory = req.query.modelDirectory;
     next();
 });
 
 // get all models
-MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: string }>( "/", async (req, res) => {
-    res.send( await fileManager.getModelsInDirectory(res.locals.modelDirectory) );
+MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: string }>( "/", (req, res, next) => {
+    fileManager.getModelsInDirectory(res.locals.modelDirectory).then(res.send).catch(next);
 });
 
 // get mesh

@@ -13,7 +13,7 @@ async function run() {
         app.use("/api", API_ROUTER); // api to work on files
         app.use(express.static("public")); // static web app
         app.use( (req, res) => res.status(404).send("No API or page under this path!") ); // default route handler
-        app.use( (err: HttpError, req: Request, res: Response, next: NextFunction) => { // error handler
+        app.use( async (err: HttpError, req: Request, res: Response, next: NextFunction) => { // error handler
             if (!err) return next();
             console.error(err);
             if (err instanceof Error) err = new HttpError(err.message);

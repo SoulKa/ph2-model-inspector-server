@@ -63,14 +63,13 @@ export class FileManager {
      * @param modelPath The filepath to the model
      * @param texturePath The filepath to the texture
      */
-    async addModel( map: string, modelPath: string, texturePath: string ) {        
+    async addModel( map: string, modelPath: string, texturePath?: string ) {        
         try {
-            const file = path.parse(modelPath);
-            await fs.symlink(modelPath, path.join(DIRECTORIES.MAP_DIR, map, file.base));
-            await fs.symlink(texturePath, path.join(DIRECTORIES.MAP_DIR, map, file.name+".png"));
+            await fs.symlink(modelPath, path.join(DIRECTORIES.MAP_DIR, map, modelPath+".fbx"));
+            if (texturePath !== undefined) await fs.symlink(texturePath, path.join(DIRECTORIES.MAP_DIR, map, texturePath+".png"));
         } catch(e) {
             console.error("Could not create symlinks:", e);
-            throw new HttpError("Could not copy model objects!");
+            throw new HttpError("Could not copy model objects! Make sure the path is correct.");
         }
     }
     
@@ -95,8 +94,14 @@ export class FileManager {
      * @param map The map to get the models from
      */
     async getModelsInMap( map: string ) {
-        const files = await fs.readdir(path.join(DIRECTORIES.MAP_DIR, map), { withFileTypes: true });
-        return files.filter( f => f.isFile() && f.name.endsWith(".fbx") ).map( f => path.parse(f.name).name );
+        const m = {} as ModelFolderObject;
+        for (const f of await fs.readdir(path.join(DIRECTORIES.MAP_DIR, map), { withFileTypes: true })) {
+            if (f.isFile() && f.name.endsWith(".fbx")) {
+                const name = f.name.slice(0, -4);
+                m[name] = fsSync.existsSync(name+".png");
+            }
+        }
+        return m;
     }
 
     /**

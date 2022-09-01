@@ -1,7 +1,7 @@
-import { Response, Router, Request } from "express";
+import { Response, Router } from "express";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
-import { ModelObject } from "../types";
+import { ModelFolderObject, ModelObject } from "../types";
 
 export const MAP_ROUTER = Router();
 const MAP_SUBROUTER = Router();
@@ -9,8 +9,8 @@ const MAP_SUBROUTER = Router();
 const fileManager = FileManager.instance;
 
 // get all maps
-MAP_ROUTER.get<"/", {}, string[], undefined>( "/", async (req, res) => {
-    res.send( await fileManager.getMaps() );
+MAP_ROUTER.get<"/", {}, string[], undefined>( "/", (req, res, next) => {
+    fileManager.getMaps().then(res.send).catch(next);
 });
 
 
@@ -29,15 +29,11 @@ MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }
 });
 
 // get all models in map
-MAP_SUBROUTER.get<"/models", {}, string[], undefined, {}, { mapName: string }>( "/models", async (req, res) => {
-    res.send( await fileManager.getModelsInMap(res.locals.mapName) );
+MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: string }>( "/models", (req, res, next) => {
+    fileManager.getModelsInMap(res.locals.mapName).then(res.send).catch(next);
 });
 
 // add models in map
-MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject[], {}, { mapName: string }>( "/models", async (req, res) => {
-    if (!Array.isArray(req.body)) throw new HttpError("Expecting an array of model objects!", 400);
-    for (const m of req.body) {
-        await fileManager.addModel(res.locals.mapName, m.modelPath, m.texturePath);
-    }
-    res.send();
+MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, {}, { mapName: string }>( "/models", (req, res, next) => {
+    fileManager.addModel(res.locals.mapName, req.body.modelPath, req.body.texturePath).then(() => res.send()).catch(next);
 });
