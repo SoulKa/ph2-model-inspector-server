@@ -1,6 +1,9 @@
 # Static HTML
 public
 
+# build directory
+build
+
 # Logs
 logs
 *.log
