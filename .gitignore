@@ -3,6 +3,7 @@ public
 
 # build directory
 build
+*.exe
 
 # Logs
 logs
