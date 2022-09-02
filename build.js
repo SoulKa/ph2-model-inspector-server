@@ -11,5 +11,6 @@ compile({
         ProductName: "PH2 Model Inspector",
         FileDescription: "A FBX model browser and PH2 map manager",
         LegalCopyright: "SoulKa under MIT license"
-    }
+    },
+    resources: ["./build/public/**/*"]
 }).then( () => console.log("Compilation done!") ).catch(console.error);
