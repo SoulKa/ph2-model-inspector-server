@@ -1,5 +1,4 @@
 import { Router } from "express";
-import path from "path";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
 import { ModelFolderObject } from "../types";
@@ -15,21 +14,7 @@ MODEL_ROUTER.use<{}, undefined, undefined, { modelDirectory: string }, { modelDi
     next();
 });
 
-// get all models
+// list all models
 MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: string }>( "/", (req, res, next) => {
     fileManager.getModelsInDirectory(res.locals.modelDirectory).then(res.send.bind(res)).catch(next);
-});
-
-// get mesh
-MODEL_ROUTER.get<"/mesh", {}, ModelFolderObject, undefined, { modelPath: string }, { modelDirectory: string }>( "/mesh", (req, res, next) => {
-    if (req.query.modelPath === undefined) throw new HttpError("Missing model path query!", 400);
-    const filepath = path.join(res.locals.modelDirectory, ...req.query.modelPath.split(":"))+".fbx";
-    res.sendFile(filepath, err => err && next(err));
-});
-
-// get texture
-MODEL_ROUTER.get<"/texture", {}, ModelFolderObject, undefined, { modelPath: string }, { modelDirectory: string }>( "/texture", (req, res, next) => {
-    if (req.query.modelPath === undefined) throw new HttpError("Missing texture path query!", 400);
-    const filepath = path.join(res.locals.modelDirectory, ...req.query.modelPath.split(":"))+".png";
-    res.sendFile(filepath, err => err && next(err));
 });
