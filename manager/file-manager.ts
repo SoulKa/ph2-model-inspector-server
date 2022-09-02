@@ -1,8 +1,8 @@
-import * as path from "path";
-import * as fsSync from "fs";
-import * as fs from "fs/promises";
+import path from "path";
+import fsSync from "fs";
+import fs from "fs/promises";
 import { HttpError } from "../classes/error";
-import { ModelFolderObject } from "../types";
+import { DirectoryObject, FileNodeObject, FileNodeType, ModelFolderObject, ModelObject } from "../types";
 
 if (!process.env.APPDATA) throw new Error("APP_DATA directory not found!");
 
@@ -67,8 +67,8 @@ export class FileManager {
      */
     async addModel( map: string, modelPath: string, texturePath?: string ) {        
         try {
-            await fs.copyFile(modelPath+".fbx", path.join(DIRECTORIES.MAP_DIR, map, path.parse(modelPath).name+".fbx"));
-            if (texturePath !== undefined) await fs.copyFile(texturePath+".png", path.join(DIRECTORIES.MAP_DIR, map, path.parse(texturePath).name+".png"));
+            await fs.copyFile(modelPath, path.join(DIRECTORIES.MAP_DIR, map, path.parse(modelPath).base));
+            if (texturePath !== undefined) await fs.copyFile(texturePath, path.join(DIRECTORIES.MAP_DIR, map, path.parse(texturePath).base));
         } catch(e) {
             console.error("Could copy files:", e);
             throw new HttpError("Could not copy model object(s)! Make sure the path is correct.");
@@ -101,14 +101,7 @@ export class FileManager {
      * @param map The map to get the models from
      */
     async getModelsInMap( map: string ) {
-        const m = {} as ModelFolderObject;
-        for (const f of await fs.readdir(path.join(DIRECTORIES.MAP_DIR, map), { withFileTypes: true })) {
-            if (f.isFile() && f.name.endsWith(".fbx")) {
-                const name = f.name.slice(0, -4);
-                m[name] = fsSync.existsSync(path.join(DIRECTORIES.MAP_DIR, map, name+".png"));
-            }
-        }
-        return m;
+        return await this.getModelsInDirectory(path.join(DIRECTORIES.MAP_DIR, map));
     }
 
     /**
@@ -119,26 +112,39 @@ export class FileManager {
     async getModelsInDirectory( dir: string ) {
 
         async function listFiles( cwd: string ) {
-            const m = {} as ModelFolderObject;
+            const res = [] as ModelFolderObject;
 
             let count = 0;
-            for (const node of await fs.readdir(cwd, { withFileTypes: true })) {
-                const filepath = path.join(cwd, node.name);
-                if (node.isDirectory()) {
-                    const subdir = await listFiles(filepath);
-                    if (subdir !== undefined) {
-                        m[node.name] = subdir;
-                        count++;
-                    }
-                } else if (node.isFile() && node.name.endsWith(".fbx")) {
-                    m[node.name.slice(0, -4)] = fsSync.existsSync(filepath.slice(0, -4)+".png");
-                    count++;
+            for (const file of await fs.readdir(cwd, { withFileTypes: true })) {
+                const filepath = path.join(cwd, file.name);
+                const obj = {
+                    name: file.name
+                } as FileNodeObject;
+
+                // check type of file/dir
+                if (file.isDirectory()) {
+                    const subfiles = await listFiles(filepath);
+                    if (subfiles === undefined) continue;
+                    obj.type = FileNodeType.DIRECTORY;
+                    (obj as DirectoryObject).children = subfiles;
+                } else if (file.isFile() && file.name.endsWith(".fbx")) {
+                    const texturePath = filepath.slice(0, -4)+".png";
+                    obj.type = FileNodeType.MODEL;
+                    obj.name = obj.name.slice(0, -4); // remove ".fbx"
+                    (obj as ModelObject).modelPath = filepath;                    
+                    if (fsSync.existsSync(texturePath)) (obj as ModelObject).texturePath = texturePath;
+                } else {
+                    continue;
                 }
+                
+                // add to files/directories
+                res.push(obj);
+                count++;
             }
-            return count === 0 ? undefined : m;
+            return count === 0 ? undefined : res;
         }
         
-        return listFiles(dir) || {};
+        return (await listFiles(dir)) || [];
     }
 
 }

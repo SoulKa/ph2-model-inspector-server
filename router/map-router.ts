@@ -35,12 +35,11 @@ MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: st
 });
 
 // add model in map
-MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, { modelDirectory: string }, { mapName: string }>( "/models", (req, res, next) => {
-    if (req.query.modelDirectory === undefined) throw new HttpError("Missing model directory in URL query!");
+MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, {}, { mapName: string }>( "/models", (req, res, next) => {
     fileManager.addModel(
         res.locals.mapName,
-        path.join(req.query.modelDirectory, ...req.body.modelPath.split(":")),
-        req.body.texturePath !== undefined ? path.join(req.query.modelDirectory, ...req.body.texturePath.split(":")) : undefined
+        req.body.modelPath,
+        req.body.texturePath !== undefined ? path.join(req.body.texturePath) : undefined
     ).then(() => res.send()).catch(next);
 });
 
@@ -50,16 +49,4 @@ MAP_SUBROUTER.delete<"/models/:model", { model: string }, undefined, undefined, 
         res.locals.mapName,
         req.params.model
     ).then(() => res.send()).catch(next);
-});
-
-// get mesh of model in map
-MAP_SUBROUTER.get<"/models/:model/mesh", { model: string }, undefined, undefined, {}, { mapName: string }>( "/models/:model/mesh", (req, res, next) => {
-    const filepath = path.join(FileManager.DIRECTORIES.MAP_DIR, res.locals.mapName, req.params.model)+".fbx";
-    res.sendFile(filepath, err => err && next(err));
-});
-
-// get texture of model in map
-MAP_SUBROUTER.get<"/models/:model/texture", { model: string }, undefined, undefined, {}, { mapName: string }>( "/models/:model/texture", (req, res, next) => {
-    const filepath = path.join(FileManager.DIRECTORIES.MAP_DIR, res.locals.mapName, req.params.model)+".png";
-    res.sendFile(filepath, err => err && next(err));
 });
