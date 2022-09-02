@@ -1,4 +1,3 @@
-import path from "path";
 import { Response, Router } from "express";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
@@ -29,18 +28,14 @@ MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }
     res.sendFile(fileManager.getMapImagePath(res.locals.mapName), err => err && next(err));
 });
 
-// get all models in map
+// get all models of map
 MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: string }>( "/models", (req, res, next) => {
     fileManager.getModelsInMap(res.locals.mapName).then(res.send.bind(res)).catch(next);
 });
 
-// add model in map
-MAP_SUBROUTER.post<"/models", {}, undefined, ModelObject, {}, { mapName: string }>( "/models", (req, res, next) => {
-    fileManager.addModel(
-        res.locals.mapName,
-        req.body.modelPath,
-        req.body.texturePath !== undefined ? path.join(req.body.texturePath) : undefined
-    ).then(() => res.send()).catch(next);
+// add model to map
+MAP_SUBROUTER.post<"/models", {}, ModelObject, ModelObject, {}, { mapName: string }>( "/models", (req, res, next) => {
+    fileManager.addModel( res.locals.mapName, req.body ).then(res.send.bind(res)).catch(next);
 });
 
 // remove model from map
@@ -48,5 +43,5 @@ MAP_SUBROUTER.delete<"/models/:model", { model: string }, undefined, undefined, 
     fileManager.removeModel(
         res.locals.mapName,
         req.params.model
-    ).then(() => res.send()).catch(next);
+    ).then(() => res.end()).catch(next);
 });

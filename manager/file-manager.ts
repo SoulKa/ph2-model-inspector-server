@@ -62,13 +62,17 @@ export class FileManager {
      * Copies the given model (.fbx model and .png texture) to the currently
      * selected map
      * @param map The map to copy it to
-     * @param modelPath The filepath to the model
-     * @param texturePath The filepath to the texture
+     * @param model The model
      */
-    async addModel( map: string, modelPath: string, texturePath?: string ) {        
+    async addModel( map: string, model: ModelObject ) {        
         try {
-            await fs.copyFile(modelPath, path.join(DIRECTORIES.MAP_DIR, map, path.parse(modelPath).base));
-            if (texturePath !== undefined) await fs.copyFile(texturePath, path.join(DIRECTORIES.MAP_DIR, map, path.parse(texturePath).base));
+            const modelPath = path.join(DIRECTORIES.MAP_DIR, map, path.parse(model.modelPath).base);
+            const texturePath = model.texturePath === undefined ? undefined : path.join(DIRECTORIES.MAP_DIR, map, path.parse(model.texturePath).base);
+            await fs.copyFile(model.modelPath, modelPath);
+            if (texturePath !== undefined) await fs.copyFile(model.texturePath!, texturePath);
+            model.modelPath = modelPath;
+            model.texturePath = texturePath;
+            return model;
         } catch(e) {
             console.error("Could copy files:", e);
             throw new HttpError("Could not copy model object(s)! Make sure the path is correct.");
