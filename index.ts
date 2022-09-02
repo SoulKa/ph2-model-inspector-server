@@ -29,7 +29,7 @@ async function run() {
             const url = "http://localhost:"+PORT;
             console.log(`Server running at "${url}"...`);
             try {
-                await open(url);
+                if (!process.argv.includes("--no-open")) await open(url);
             } catch(e) {
                 console.error("Could not open browser tab:", e);
             }
