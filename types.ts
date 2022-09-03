@@ -21,3 +21,5 @@ export type DirectoryObject = FileNodeObjectBase & {
 
 export type FileNodeObject = ModelObject|DirectoryObject;
 export type ModelFolderObject = FileNodeObject[];
+
+export type DirectoryListingObject = { [name: string]: boolean };

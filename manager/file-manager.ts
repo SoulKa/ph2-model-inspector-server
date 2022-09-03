@@ -2,7 +2,7 @@ import path from "path";
 import fsSync from "fs";
 import fs from "fs/promises";
 import { HttpError } from "../classes/error";
-import { DirectoryObject, FileNodeObject, FileNodeType, ModelFolderObject, ModelObject } from "../types";
+import { DirectoryListingObject, DirectoryObject, FileNodeObject, FileNodeType, ModelFolderObject, ModelObject } from "../types";
 
 if (!process.env.APPDATA) throw new Error("APP_DATA directory not found!");
 
@@ -149,6 +149,17 @@ export class FileManager {
         }
         
         return (await listFiles(dir)) || [];
+    }
+
+    /**
+     * Sends a filelist
+     * @param filepath The directory path
+     */
+    async listFiles( filepath: string ) {
+        const files = await fs.readdir(filepath, { withFileTypes: true });
+        const obj = {} as DirectoryListingObject;
+        files.forEach( f => obj[f.name] = f.isDirectory() );
+        return obj;
     }
 
 }
