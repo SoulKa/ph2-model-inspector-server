@@ -1,4 +1,5 @@
 import path from "path";
+import os from "os";
 import { Router } from "express";
 import { FileManager } from "../manager/file-manager";
 
@@ -15,5 +16,5 @@ DIRECTORY_ROUTER.get<"/", {}, any|string[], undefined, { path: string }>("/", (r
         }).catch(next);
 });
 
-// gets the OS specific file path delimiter
-DIRECTORY_ROUTER.get<"/delimiter">("/delimiter", (req, res) => res.send({ delimiter: path.sep }));
+// gets the OS specific info
+DIRECTORY_ROUTER.get<"/os-info">("/os-info", (req, res) => res.send({ delimiter: path.sep, homedir: os.homedir() }));
