@@ -156,6 +156,7 @@ export class FileManager {
      * @param filepath The directory path
      */
     async listFiles( filepath: string ) {
+        if (!filepath.endsWith(path.sep)) filepath += path.sep;
         const files = await fs.readdir(filepath, { withFileTypes: true });
         const obj = {} as DirectoryListingObject;
         files.forEach( f => obj[f.name] = f.isDirectory() );
