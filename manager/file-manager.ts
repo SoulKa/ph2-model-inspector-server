@@ -175,7 +175,7 @@ export class FileManager {
      */
     async getTextureConfig( directory: string ) {
         const filepath = path.join(directory, FILENAMES.CUSTOM_TEXTURES);
-        if (!fsSync.existsSync(filepath)) this.setTextureConfig(directory, {});
+        if (!fsSync.existsSync(filepath)) await this.setTextureConfig(directory, {});
         return JSON.parse(await fs.readFile(filepath, "utf8")) as TextureConfigObject;
     }
 
