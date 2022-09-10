@@ -25,7 +25,7 @@ async function run() {
         app.get("*", (req, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
 
         // start server
-        app.listen(PORT, async () => {
+        app.listen(PORT, "localhost", async () => {
             const url = "http://localhost:"+PORT;
             console.log(`Server running at "${url}"...`);
             try {
