@@ -2,13 +2,18 @@ import path from "path";
 import fsSync from "fs";
 import fs from "fs/promises";
 import { HttpError } from "../classes/error";
-import { DirectoryListingObject, DirectoryObject, FileNodeObject, FileNodeType, ModelFolderObject, ModelObject } from "../types";
+import { DirectoryListingObject, DirectoryObject, FileNodeObject, FileNodeType, TextureConfigObject, ModelFolderObject, ModelObject } from "../types";
 
 if (!process.env.APPDATA) throw new Error("APP_DATA directory not found!");
 
 const DIRECTORIES = {
     MAP_DIR: path.join(process.env.APPDATA, "../", "Local", "PerfectHeist2", "Saved", "LevelEditor")
 };
+
+const enum FILENAMES {
+    CUSTOM_TEXTURES = "custom-textures.json"
+}
+
 
 /**
  * Checks if the given path exists
@@ -131,6 +136,7 @@ export class FileManager {
                     if (subfiles === undefined) continue;
                     obj.type = FileNodeType.DIRECTORY;
                     (obj as DirectoryObject).children = subfiles;
+                    (obj as DirectoryObject).path = filepath;
                 } else if (file.isFile() && file.name.endsWith(".fbx")) {
                     const texturePath = filepath.slice(0, -4)+".png";
                     obj.type = FileNodeType.MODEL;
@@ -161,6 +167,25 @@ export class FileManager {
         const obj = {} as DirectoryListingObject;
         files.forEach( f => obj[f.name] = f.isDirectory() );
         return obj;
+    }
+
+    /**
+     * Reads the texture config object for a working directory
+     * @param directory The current working directory of the models
+     */
+    async getTextureConfig( directory: string ) {
+        const filepath = path.join(directory, FILENAMES.CUSTOM_TEXTURES);
+        if (!fsSync.existsSync(filepath)) this.setTextureConfig(directory, {});
+        return JSON.parse(await fs.readFile(filepath, "utf8")) as TextureConfigObject;
+    }
+
+    /**
+     * Writes the texture config object for a working directory
+     * @param directory The current working directory of the models
+     * @param config The config to write
+     */
+    async setTextureConfig( directory: string, config: TextureConfigObject ) {
+        await fs.writeFile(path.join(directory, FILENAMES.CUSTOM_TEXTURES), JSON.stringify(config));
     }
 
 }

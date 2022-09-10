@@ -16,6 +16,7 @@ export type ModelObject = FileNodeObjectBase & {
 
 export type DirectoryObject = FileNodeObjectBase & {
     type: FileNodeType.DIRECTORY;
+    path: string;
     children: ModelFolderObject;
 };
 
@@ -26,3 +27,5 @@ export type DirectoryListingObject = { [name: string]: boolean };
 
 export type PathDelimiter = "/"|"\\";
 export type OsInfoObject = { delimiter: "/"|"\\"; homedir: string };
+
+export type TextureConfigObject = { [modelFilepath: string]: string };
