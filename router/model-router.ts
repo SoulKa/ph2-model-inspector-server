@@ -16,7 +16,7 @@ MODEL_ROUTER.use<{}, undefined, undefined, { modelDirectory: string }, { modelDi
 
 // list all models
 MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: string }>( "/", (req, res, next) => {
-    fileManager.getModelsInDirectory(res.locals.modelDirectory).then(res.send.bind(res)).catch(next);
+    fileManager.getModelsInDirectory(res.locals.modelDirectory, true).then(res.send.bind(res)).catch(next);
 });
 
 // get custom textures

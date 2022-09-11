@@ -116,11 +116,15 @@ export class FileManager {
     /**
      * Deep-searches all 3D FBX models in the given directory
      * @param dir The directory to search
+     * @param withCustomTextures If true, the custom texture config will be merged into the response
      * @returns The filepaths relative to the given directory
      */
-    async getModelsInDirectory( dir: string ) {
+    async getModelsInDirectory( dir: string, withCustomTextures = false ) {
 
-        async function listFiles( cwd: string ) {
+        // A map containing modelPath ==> texturePath links
+        const textures = new Map(Object.entries(withCustomTextures ? await this.getTextureConfig(dir) : {}));
+
+        async function listFiles( cwd: string, customTexturePath?: string ) {
             const res = [] as ModelFolderObject;
 
             let count = 0;
@@ -130,9 +134,12 @@ export class FileManager {
                     name: file.name
                 } as FileNodeObject;
 
+                // get custom texture for this directory or model
+                const _customTexturePath = textures.get(filepath) || customTexturePath;
+
                 // check type of file/dir
                 if (file.isDirectory()) {
-                    const subfiles = await listFiles(filepath);
+                    const subfiles = await listFiles(filepath, _customTexturePath);
                     if (subfiles === undefined) continue;
                     obj.type = FileNodeType.DIRECTORY;
                     (obj as DirectoryObject).children = subfiles;
@@ -141,8 +148,8 @@ export class FileManager {
                     const texturePath = filepath.slice(0, -4)+".png";
                     obj.type = FileNodeType.MODEL;
                     obj.name = obj.name.slice(0, -4); // remove ".fbx"
-                    (obj as ModelObject).modelPath = filepath;                    
-                    if (fsSync.existsSync(texturePath)) (obj as ModelObject).texturePath = texturePath;
+                    (obj as ModelObject).modelPath = filepath;
+                    (obj as ModelObject).texturePath = _customTexturePath || (fsSync.existsSync(texturePath) ? texturePath : undefined);
                 } else {
                     continue;
                 }
@@ -154,6 +161,7 @@ export class FileManager {
             return count === 0 ? undefined : res;
         }
         
+        // get models
         return (await listFiles(dir)) || [];
     }
 
