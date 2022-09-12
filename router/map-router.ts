@@ -1,7 +1,7 @@
 import { Response, Router } from "express";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
-import { ModelFolderObject, ModelObject } from "../types";
+import { FileNodeObject, ModelObject, ModelPathInfoObject } from "../types";
 
 export const MAP_ROUTER = Router();
 const MAP_SUBROUTER = Router();
@@ -29,12 +29,12 @@ MAP_SUBROUTER.get<"/preview.png", {}, string, undefined, {}, { mapName: string }
 });
 
 // get all models of map
-MAP_SUBROUTER.get<"/models", {}, ModelFolderObject, undefined, {}, { mapName: string }>( "/models", (req, res, next) => {
+MAP_SUBROUTER.get<"/models", {}, FileNodeObject[], undefined, {}, { mapName: string }>( "/models", (req, res, next) => {
     fileManager.getModelsInMap(res.locals.mapName).then(res.send.bind(res)).catch(next);
 });
 
 // add model to map
-MAP_SUBROUTER.post<"/models", {}, ModelObject, ModelObject, {}, { mapName: string }>( "/models", (req, res, next) => {
+MAP_SUBROUTER.post<"/models", {}, ModelPathInfoObject, ModelPathInfoObject, {}, { mapName: string }>( "/models", (req, res, next) => {
     fileManager.addModel( res.locals.mapName, req.body ).then(res.send.bind(res)).catch(next);
 });
 

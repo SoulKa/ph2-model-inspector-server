@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { HttpError } from "../classes/error";
 import { FileManager } from "../manager/file-manager";
-import { TextureConfigObject, ModelFolderObject } from "../types";
+import { FileNodeObject, TextureConfigObject } from "../types";
 
 export const MODEL_ROUTER = Router();
 
@@ -15,7 +15,7 @@ MODEL_ROUTER.use<{}, undefined, undefined, { modelDirectory: string }, { modelDi
 });
 
 // list all models
-MODEL_ROUTER.get<"/", {}, ModelFolderObject, undefined, {}, { modelDirectory: string }>( "/", (req, res, next) => {
+MODEL_ROUTER.get<"/", {}, FileNodeObject[], undefined, {}, { modelDirectory: string }>( "/", (req, res, next) => {
     fileManager.getModelsInDirectory(res.locals.modelDirectory, true).then(res.send.bind(res)).catch(next);
 });
 
@@ -28,6 +28,14 @@ MODEL_ROUTER.get<"/textures", {}, TextureConfigObject, undefined, {}, { modelDir
 MODEL_ROUTER.post<"/textures", {}, undefined, undefined, { texturePath: string; modelPath: string }, { modelDirectory: string }>( "/textures", (req, res, next) => {
     fileManager.getTextureConfig(res.locals.modelDirectory)
         .then( c => { c[req.query.modelPath] = req.query.texturePath; return fileManager.setTextureConfig(res.locals.modelDirectory, c); })
+        .then( () => res.end() )
+        .catch(next);
+});
+
+// remove custom texture
+MODEL_ROUTER.delete<"/textures", {}, undefined, undefined, { modelPath: string }, { modelDirectory: string }>( "/textures", (req, res, next) => {
+    fileManager.getTextureConfig(res.locals.modelDirectory)
+        .then( c => { delete c[req.query.modelPath]; return fileManager.setTextureConfig(res.locals.modelDirectory, c); })
         .then( () => res.end() )
         .catch(next);
 });

@@ -2,7 +2,7 @@ import path from "path";
 import fsSync from "fs";
 import fs from "fs/promises";
 import { HttpError } from "../classes/error";
-import { DirectoryListingObject, DirectoryObject, FileNodeObject, FileNodeType, TextureConfigObject, ModelFolderObject, ModelObject } from "../types";
+import { DirectoryListingObject, DirectoryObject, FileNodeObject, FileNodeType, TextureConfigObject, ModelObject, ModelPathInfoObject } from "../types";
 
 if (!process.env.APPDATA) throw new Error("APP_DATA directory not found!");
 
@@ -69,10 +69,10 @@ export class FileManager {
      * @param map The map to copy it to
      * @param model The model
      */
-    async addModel( map: string, model: ModelObject ) {        
+    async addModel( map: string, model: ModelPathInfoObject ) {        
         try {
             const modelPath = path.join(DIRECTORIES.MAP_DIR, map, path.parse(model.modelPath).base);
-            const texturePath = model.texturePath === undefined ? undefined : path.join(DIRECTORIES.MAP_DIR, map, path.parse(model.texturePath).base);
+            const texturePath = model.texturePath === undefined ? undefined : path.join(DIRECTORIES.MAP_DIR, map, path.parse(model.modelPath).name+path.parse(model.texturePath).ext);
             await fs.copyFile(model.modelPath, modelPath);
             if (texturePath !== undefined) await fs.copyFile(model.texturePath!, texturePath);
             model.modelPath = modelPath;
@@ -92,12 +92,13 @@ export class FileManager {
      */
     async removeModel( map: string, name: string ) {
         try {
-            await fs.unlink(path.join(DIRECTORIES.MAP_DIR, map, name+".fbx"));
+            const modelPath = path.join(DIRECTORIES.MAP_DIR, map, name+".fbx");
+            const texturePath = path.join(DIRECTORIES.MAP_DIR, map, name+".png");
+            await fs.unlink(modelPath);
             try {
-                await fs.unlink(path.join(DIRECTORIES.MAP_DIR, map, name+".png"))
+                await fs.unlink(texturePath)
             } catch(e) {
-                if ((e as Error & { errno: number, code: string, syscall: string, path: string })?.errno === -4058) return
-                throw e;
+                if (!((e as Error & { errno: number, code: string, syscall: string, path: string })?.errno === -4058)) throw e;
             };
         } catch(e) {
             console.error("Could not remove model:", e);
@@ -124,32 +125,29 @@ export class FileManager {
         // A map containing modelPath ==> texturePath links
         const textures = new Map(Object.entries(withCustomTextures ? await this.getTextureConfig(dir) : {}));
 
-        async function listFiles( cwd: string, customTexturePath?: string ) {
-            const res = [] as ModelFolderObject;
+        async function listFiles( cwd: string ) {
+            const res = [] as FileNodeObject[];
 
             let count = 0;
             for (const file of await fs.readdir(cwd, { withFileTypes: true })) {
                 const filepath = path.join(cwd, file.name);
                 const obj = {
-                    name: file.name
+                    name: file.name,
+                    customTexturePath: textures.get(filepath),
+                    path: filepath
                 } as FileNodeObject;
-
-                // get custom texture for this directory or model
-                const _customTexturePath = textures.get(filepath) || customTexturePath;
 
                 // check type of file/dir
                 if (file.isDirectory()) {
-                    const subfiles = await listFiles(filepath, _customTexturePath);
+                    const subfiles = await listFiles(filepath);
                     if (subfiles === undefined) continue;
                     obj.type = FileNodeType.DIRECTORY;
                     (obj as DirectoryObject).children = subfiles;
-                    (obj as DirectoryObject).path = filepath;
                 } else if (file.isFile() && file.name.endsWith(".fbx")) {
                     const texturePath = filepath.slice(0, -4)+".png";
                     obj.type = FileNodeType.MODEL;
                     obj.name = obj.name.slice(0, -4); // remove ".fbx"
-                    (obj as ModelObject).modelPath = filepath;
-                    (obj as ModelObject).texturePath = _customTexturePath || (fsSync.existsSync(texturePath) ? texturePath : undefined);
+                    if (fsSync.existsSync(texturePath)) (obj as ModelObject).texturePath = texturePath;
                 } else {
                     continue;
                 }
